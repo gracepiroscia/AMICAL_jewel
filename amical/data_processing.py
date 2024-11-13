@@ -374,6 +374,7 @@ def show_clean_params(
     *,
     ifu=False,
     mask=None,
+    psf_loc=None,
 ):
     """Display the input parameters for the cleaning.
 
@@ -390,6 +391,9 @@ def show_clean_params(
     `remove_bad` {bool}: If True, the bad pixels are removed using a gaussian interpolation,\n
     `nframe` {int}: Frame number to be shown (default: 0),\n
     `ihdu` {int}: Hdu number of the fits file. Normally 1 for NIRISS and 0 for SPHERE (default: 0).
+    `psf_loc` {list} -- Rough location of the center of the relevant PSF in the image, in pixels, [row, col].
+    Needed if there are multiple psfs on detector at once (as in MBI and Jewel masking) (default: {None}),\n
+
     """
     import matplotlib.pyplot as plt
     from astropy.io import fits
@@ -417,6 +421,11 @@ def show_clean_params(
         img1 = fix_bad_pixels(img0, bmap0, add_bad=ab0)
     else:
         img1 = img0.copy()
+
+    if psf_loc is not None:
+        assert isz is not None, "isz must be set if psf_loc is set"
+        hlf_sz = int((isz*1.5)/ 2)
+        img1= img1[psf_loc[0]-hlf_sz:psf_loc[0]+hlf_sz, psf_loc[1]-hlf_sz:psf_loc[1]+hlf_sz]
 
     if isz is None:
         pos = (img1.shape[0] // 2, img1.shape[1] // 2)
@@ -569,6 +578,7 @@ def clean_data(
     verbose=False,
     *,
     mask=None,
+    psf_loc=None,
 ):
     """Clean data.
 
@@ -581,6 +591,8 @@ def clean_data(
     `dr` {int} -- Outer radius to compute sky (default: {None})\n
     `edge` {int} -- Patch the edges of the image (VLT/SPHERE artifact, default: {200}),\n
     `checkrad` {bool} -- If True, check the resizing and sky substraction parameters (default: {False})\n
+    `psf_loc` {list} -- Rough location of the center of the relevant PSF in the image, in pixels, [row, col].
+    Needed if there are multiple psfs on detector at once (as in MBI and Jewel masking) (default: {None}),\n
 
     Returns:
     --------
@@ -601,6 +613,11 @@ def clean_data(
             img1 = img0.copy()
 
         img1 = _remove_dark(img1, darkfile=darkfile, verbose=verbose)
+
+        if psf_loc is not None:
+            assert isz is not None, "isz must be set if psf_loc is set"            
+            hlf_sz = int((isz*1.5)/ 2)
+            img1= img1[psf_loc[0]-hlf_sz:psf_loc[0]+hlf_sz, psf_loc[1]-hlf_sz:psf_loc[1]+hlf_sz]
 
         if isz is not None:
             # Get expected center for sky correction
@@ -683,6 +700,7 @@ def select_clean_data(
     nframe=0,
     mask=None,
     i_wl=None,
+    psf_loc=None,
 ):
     """Clean and select good datacube (sigma-clipping using fluxes variations).
 
@@ -709,6 +727,8 @@ def select_clean_data(
     `remove_bad` {bool}: If True, the bad pixels are removed in the cleaning parameter
     plots using a gaussian interpolation (default: {True}),\n
     `nframe` {int}: Frame number used to show cleaning parameters (default: {0}),\n
+    `psf_loc` {list} -- Rough location of the center of the relevant PSF in the image, in pixels, [row, col].
+    Needed if there are multiple psfs on detector at once (as in MBI and Jewel masking) (default: {None}),\n
 
     Returns:
     --------
@@ -786,6 +806,7 @@ def select_clean_data(
             apod=apod,
             window=window,
             ifu=ifu,
+            psf_loc=psf_loc,
         )
 
     if ifu:
@@ -808,6 +829,7 @@ def select_clean_data(
         darkfile=darkfile,
         verbose=verbose,
         mask=mask,
+        psf_loc=psf_loc,
     )
 
     if cube_cleaned is None:
