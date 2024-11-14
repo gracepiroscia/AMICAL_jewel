@@ -299,6 +299,7 @@ def fix_bad_pixels(image, bad_map, add_bad=None, x_stddev=1):
             bad_map[add_bad[j][1], add_bad[j][0]] = 1
 
     img_nan = image.copy()
+    img_nan = np.asarray(img_nan, dtype=float)  
     img_nan[bad_map == 1] = np.nan
     kernel = Gaussian2DKernel(x_stddev=x_stddev)
     fixed_image = interpolate_replace_nans(img_nan, kernel)
@@ -426,6 +427,7 @@ def show_clean_params(
         assert isz is not None, "isz must be set if psf_loc is set"
         hlf_sz = int((isz*1.5)/ 2)
         img1= img1[psf_loc[0]-hlf_sz:psf_loc[0]+hlf_sz, psf_loc[1]-hlf_sz:psf_loc[1]+hlf_sz]
+        dims = img1.shape
 
     if isz is None:
         pos = (img1.shape[0] // 2, img1.shape[1] // 2)
