@@ -213,10 +213,18 @@ def get_wavelength(ins, filtname):
     YJfile = datadir / "ifs_wave_YJ.fits"
     YJHfile = datadir / "ifs_wave_YJH.fits"
 
-    with fits.open(YJfile) as fd:
-        wave_YJ = fd[0].data
-    with fits.open(YJHfile) as fd:
-        wave_YJH = fd[0].data
+    try:
+        with fits.open(YJfile) as fd:
+            wave_YJ = fd[0].data
+        with fits.open(YJHfile) as fd:
+            wave_YJH = fd[0].data
+    except:
+        rprint(
+            f"[red]\n-- Error: missing internal data files (fits) for SPHERE-IFS filters.",
+            file=sys.stderr,
+        )
+        wave_YJ = None
+        wave_YJH = None
 
     dic_filt = {
         "NIRISS": {

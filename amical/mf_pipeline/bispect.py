@@ -306,6 +306,56 @@ def _show_peak_position(
         top=0.965, bottom=0.035, left=0.025, right=0.965, hspace=0.2, wspace=0.2
     )
 
+def _show_ft_arr_peak(ft_arr, n_baselines, mf, maskname, peakmethod,
+                        i_fram=0, aver=False, centred=False, size=20,
+                        norm=None, alpha=1, vmin=None, vmax=None, log_stretch=False, savepath = True):
+    """ Show the expected position of the peaks in the Fourier space using the
+    mask coordinates and the chosen method. """
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+    ft_frame = ft_arr[i_fram]
+    ps = abs(ft_frame)
+
+    if aver:
+        ps = np.mean(np.abs(ft_arr), axis=0)
+        if centred:
+            ps = np.fft.fftshift(ps)
+    ps /= ps.max()
+
+    lX, lY, lC = [], [], []
+    for j in range(n_baselines):
+        lX.extend(mf.l_norm_c[j][1])
+        lY.extend(mf.l_norm_c[j][0])
+        lC.extend(mf.v_norm_c[j])
+        lX.extend(mf.l_conj_c[j][1])
+        lY.extend(mf.l_conj_c[j][0])
+        lC.extend(mf.v_conj_c[j])
+
+    fig, ax = plt.subplots(figsize=(18, 14))
+    ax.set_title("Expected FT splodge position with mask %s (method = %s)" %
+                    (maskname, peakmethod))
+    if log_stretch:
+        im = ax.imshow(np.log10(ps), cmap="magma", origin="lower", norm=norm,
+                        vmin=vmin, vmax=vmax)
+    else:
+        im = ax.imshow(ps, cmap="gist_stern", origin="lower", norm=norm,
+                        vmin=vmin,vmax=vmax)
+    sc = ax.scatter(lX, lY, c=lC, s=size, cmap="viridis", alpha=alpha)
+    divider = make_axes_locatable(ax)
+    cax = divider.new_horizontal(size="3%", pad=0.5)
+    fig.add_axes(cax)
+    cb = fig.colorbar(im, cax=cax)
+
+    cax2 = divider.new_horizontal(size="3%", pad=0.8, pack_start=True)
+    fig.add_axes(cax2)
+    cb2 = fig.colorbar(sc, cax=cax2)
+    cb2.ax.yaxis.set_ticks_position('left')
+    cb.set_label("Power Spectrum intensity")
+    cb2.set_label("Relative weight [%]", fontsize=20)
+    plt.subplots_adjust(top=0.965, bottom=0.035, left=0.05, right=0.965,
+                        hspace=0.2, wspace=0.2)
+
 
 def _show_norm_matrices(obs_norm, expert_plot=False):
     """Show covariances matrices of the V2, CP, and a combination
@@ -1237,6 +1287,9 @@ def extract_bs(
         if save_to is not None:
             plt.savefig(f"{figname}_{ifig}.pdf")
         ifig += 1
+
+        _show_ft_arr_peak(ft_arr, n_baselines, mf, maskname, peakmethod,
+                          aver=True, centred=True, savepath = False)
 
     if verbose:
         print(f"\nFilename: {filename}")

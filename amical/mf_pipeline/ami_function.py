@@ -328,6 +328,7 @@ def make_mf(
     display=True,
     save_to=None,
     filename=None,
+    fliplr=False,
 ):
     """
     Summary:
@@ -392,6 +393,9 @@ def make_mf(
 
     x_mask = xy_coords[:, 0] * scaling
     y_mask = xy_coords[:, 1] * scaling
+
+    if fliplr:
+        x_mask *= -1
 
     x_mask_rot = x_mask * np.cos(np.deg2rad(theta_detector)) + y_mask * np.sin(
         np.deg2rad(theta_detector)
@@ -524,6 +528,8 @@ def make_mf(
         dtype=[("norm", float), ("conj", float), ("norm_c", float), ("conj_c", float)],
     )
 
+    l_norm_c, l_conj_c = [], []
+    v_norm_c, v_conj_c = [], []
     for i in range(n_baselines):
         mf_tmp = np.zeros([npix, npix])
         mf_tmp_c = np.zeros([npix, npix])
@@ -533,6 +539,9 @@ def make_mf(
 
         mf_tmp.ravel()[ind] = mf_gvct[mf_ix[0, i] : mf_ix[1, i]]
         mf_tmp_c.ravel()[ind_c] = mfc_gvct[mf_ix_c[0, i] : mf_ix_c[1, i]]
+
+        l_norm_c.append(np.where(mf_tmp_c > 0))
+        v_norm_c.append(mfc_gvct[mf_ix_c[0, i]:mf_ix_c[1, i]])
 
         mf_tmp = mf_tmp.reshape([npix, npix])
         mf_tmp_c = mf_tmp_c.reshape([npix, npix])
@@ -545,10 +554,14 @@ def make_mf(
             np.roll(np.rot90(np.rot90(mf_tmp_c)), 1, axis=0), 1, axis=1
         )
 
+        l_conj_c.append(np.where(mf_temp_rot_c > 0))
+        v_conj_c.append(mf_temp_rot_c[np.where(mf_temp_rot_c > 0)].T)
+
         mf["conj"][:, :, i] = mf_temp_rot
         mf["conj_c"][:, :, i] = mf_temp_rot_c
 
         norm = np.sqrt(np.sum(mf["norm"][:, :, i] ** 2))
+        # norm = np.sqrt(np.sum(mf['norm'][:, :, i])**2) # vampires dev vers
 
         mf["norm"][:, :, i] = mf["norm"][:, :, i] / norm
         mf["conj"][:, :, i] = mf["conj"][:, :, i] / norm
@@ -592,6 +605,10 @@ def make_mf(
         "e_wl": filt[1],
         "pixelSize": pixelsize,
         "xy_coords": xy_coords,
+        'l_conj_c': l_conj_c,
+        'l_norm_c': l_norm_c,
+        'v_norm_c': v_norm_c,
+        'v_conj_c': v_conj_c,
     }
 
     return dict2class(out)
