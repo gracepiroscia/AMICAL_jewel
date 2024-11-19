@@ -21,5 +21,3 @@ setup(
     extras_require={"dev": ["pytest"]},
     package_data={"amical": ["internal_data/*.fits"]},
 )
-
-print("found packages: ", find_packages())
