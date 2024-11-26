@@ -376,6 +376,7 @@ def show_clean_params(
     ifu=False,
     mask=None,
     psf_loc=None,
+    flipud=False,
 ):
     """Display the input parameters for the cleaning.
 
@@ -394,6 +395,7 @@ def show_clean_params(
     `ihdu` {int}: Hdu number of the fits file. Normally 1 for NIRISS and 0 for SPHERE (default: 0).
     `psf_loc` {list} -- Rough location of the center of the relevant PSF in the image, in pixels, [row, col].
     Needed if there are multiple psfs on detector at once (as in MBI and Jewel masking) (default: {None}),\n
+    `flipud` {bool} -- If True, image from datacube is flipped upside down prior to cleaning (default: {False}).
 
     """
     import matplotlib.pyplot as plt
@@ -408,6 +410,9 @@ def show_clean_params(
 
     img0 = data[nframe]
     dims = img0.shape
+
+    if flipud:
+        img0 = np.flipud(img0)
 
     bad_map, add_bad = _get_3d_bad_pixels(bad_map, add_bad, data)
     bmap0 = bad_map[nframe]
@@ -703,6 +708,7 @@ def select_clean_data(
     mask=None,
     i_wl=None,
     psf_loc=None,
+    flipud = False,
 ):
     """Clean and select good datacube (sigma-clipping using fluxes variations).
 
@@ -731,6 +737,8 @@ def select_clean_data(
     `nframe` {int}: Frame number used to show cleaning parameters (default: {0}),\n
     `psf_loc` {list} -- Rough location of the center of the relevant PSF in the image, in pixels, [row, col].
     Needed if there are multiple psfs on detector at once (as in MBI and Jewel masking) (default: {None}),\n
+    `flipud` {bool} -- If True, data read from fits file is flipped upside down before the cleaning process\n
+    (default: {False}).
 
     Returns:
     --------
@@ -741,6 +749,9 @@ def select_clean_data(
     with fits.open(filename) as hdu:
         cube = hdu[ihdu].data
         hdr = hdu[0].header
+
+        if flipud:
+            cube = np.flip(cube, axis=1)
 
     ins = hdr.get("INSTRUME", None)
 
@@ -809,6 +820,7 @@ def select_clean_data(
             window=window,
             ifu=ifu,
             psf_loc=psf_loc,
+            flipud=flipud,
         )
 
     if ifu:
@@ -832,6 +844,7 @@ def select_clean_data(
         verbose=verbose,
         mask=mask,
         psf_loc=psf_loc,
+        flipud=flipud,
     )
 
     if cube_cleaned is None:
