@@ -1290,6 +1290,9 @@ def extract_bs(
 
         _show_ft_arr_peak(ft_arr, n_baselines, mf, maskname, peakmethod,
                           aver=True, centred=True, savepath = False)
+        if save_to is not None:
+            plt.savefig(f"{figname}_{ifig}.pdf")
+        ifig += 1
 
     if verbose:
         print(f"\nFilename: {filename}")

@@ -220,7 +220,7 @@ def get_wavelength(ins, filtname):
             wave_YJH = fd[0].data
     except:
         rprint(
-            f"[red]\n-- Error: missing internal data files (fits) for SPHERE-IFS filters.",
+            f"[blue]\n-- Warning: missing internal data files (fits) for SPHERE-IFS filters.",
             file=sys.stderr,
         )
         wave_YJ = None
