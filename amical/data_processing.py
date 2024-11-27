@@ -586,6 +586,7 @@ def clean_data(
     *,
     mask=None,
     psf_loc=None,
+    darkarray=None,
 ):
     """Clean data.
 
@@ -600,6 +601,8 @@ def clean_data(
     `checkrad` {bool} -- If True, check the resizing and sky substraction parameters (default: {False})\n
     `psf_loc` {list} -- Rough location of the center of the relevant PSF in the image, in pixels, [row, col].
     Needed if there are multiple psfs on detector at once (as in MBI and Jewel masking) (default: {None}),\n
+    `darkarray` {np.array} -- Dark array to be subtracted from the datacube. 2D shape same size as images\n
+    in the datacube (default: {None}).
 
     Returns:
     --------
@@ -619,7 +622,15 @@ def clean_data(
         else:
             img1 = img0.copy()
 
-        img1 = _remove_dark(img1, darkfile=darkfile, verbose=verbose)
+        if darkarray is not None:
+            assert darkarray.shape == img1.shape, "Dark array must have same shape as images in datacube"
+            img1 -= darkarray
+        elif darkfile is not None:
+             # __highly inefficient__ 
+             # (loads and calcs the same mean for the same dark file every time)
+             # non-preffered method
+            img1 = _remove_dark(img1, darkfile=darkfile, verbose=verbose)
+
 
         if psf_loc is not None:
             assert isz is not None, "isz must be set if psf_loc is set"            
@@ -709,6 +720,7 @@ def select_clean_data(
     i_wl=None,
     psf_loc=None,
     flipud = False,
+    darkarray=None,
 ):
     """Clean and select good datacube (sigma-clipping using fluxes variations).
 
@@ -739,6 +751,8 @@ def select_clean_data(
     Needed if there are multiple psfs on detector at once (as in MBI and Jewel masking) (default: {None}),\n
     `flipud` {bool} -- If True, data read from fits file is flipped upside down before the cleaning process\n
     (default: {False}).
+    `darkarray` {np.array} -- Dark array to be subtracted from the datacube. 2D shape same size as images\n
+    in the datacube (default: {None}).
 
     Returns:
     --------
@@ -845,6 +859,7 @@ def select_clean_data(
         mask=mask,
         psf_loc=psf_loc,
         flipud=flipud,
+        darkarray=darkarray,
     )
 
     if cube_cleaned is None:
