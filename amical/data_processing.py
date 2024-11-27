@@ -858,7 +858,6 @@ def select_clean_data(
         verbose=verbose,
         mask=mask,
         psf_loc=psf_loc,
-        flipud=flipud,
         darkarray=darkarray,
     )
 
