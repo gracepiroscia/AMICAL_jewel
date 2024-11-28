@@ -308,7 +308,8 @@ def _show_peak_position(
 
 def _show_ft_arr_peak(ft_arr, n_baselines, mf, maskname, peakmethod,
                         i_fram=0, aver=False, centred=False, size=20,
-                        norm=None, alpha=1, vmin=None, vmax=None, log_stretch=False, savepath = True):
+                        norm=None, alpha=1, vmin=None, vmax=None, log_stretch=False, savepath = None,
+                        filename =None):
     """ Show the expected position of the peaks in the Fourier space using the
     mask coordinates and the chosen method. """
     import matplotlib.pyplot as plt
@@ -355,6 +356,10 @@ def _show_ft_arr_peak(ft_arr, n_baselines, mf, maskname, peakmethod,
     cb2.set_label("Relative weight [%]", fontsize=20)
     plt.subplots_adjust(top=0.965, bottom=0.035, left=0.05, right=0.965,
                         hspace=0.2, wspace=0.2)
+    
+    if savepath is not None:
+        figname = os.path.join(savepath, maskname + "_" + Path(filename).stem)
+        plt.savefig(figname+".png")
 
 
 def _show_norm_matrices(obs_norm, expert_plot=False):
@@ -1109,6 +1114,7 @@ def extract_bs(
     save_to=None,
     verbose=False,
     display=True,
+    save_ft_png_to=None,
 ):
     """Compute the bispectrum (bs, v2, cp, etc.) from a data cube.
 
@@ -1164,6 +1170,9 @@ def extract_bs(
         If True, print usefull informations during the process.\n
     `display` {bool}:
         If True, display all figures,\n
+    `save_ft_png_to` {str}: Default None
+        Name of the directory to save a png figure of the _show_ft_arr_peak output\n
+        to.
 
     Returns:
     --------
@@ -1288,12 +1297,11 @@ def extract_bs(
             plt.savefig(f"{figname}_{ifig}.pdf")
         ifig += 1
 
+    if save_ft_png_to is not None:
         _show_ft_arr_peak(ft_arr, n_baselines, mf, maskname, peakmethod,
-                          aver=True, centred=True, savepath = False)
-        if save_to is not None:
-            plt.savefig(f"{figname}_{ifig}.pdf")
-        ifig += 1
-
+                            aver=True, centred=True, savepath = save_ft_png_to,
+                            filename=filename)
+        
     if verbose:
         print(f"\nFilename: {filename}")
         print("# of frames = %i" % n_ps)
