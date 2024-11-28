@@ -634,8 +634,9 @@ def clean_data(
 
         if psf_loc is not None:
             assert isz is not None, "isz must be set if psf_loc is set"            
-            hlf_sz = int((isz*1.5)/ 2)
+            hlf_sz = int((isz*1.2)/ 2)
             img1= img1[psf_loc[0]-hlf_sz:psf_loc[0]+hlf_sz, psf_loc[1]-hlf_sz:psf_loc[1]+hlf_sz]
+            assert img1.shape == (2*hlf_sz,2*hlf_sz), "Cropping out of bounds. Change isz or check psf_loc."
 
         if isz is not None:
             # Get expected center for sky correction
