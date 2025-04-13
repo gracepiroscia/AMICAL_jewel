@@ -406,7 +406,11 @@ def _check_input_infos(hdr, targetname=None, filtname=None, instrum=None, verbos
 
     target = hdr.get("OBJECT")
     filt = hdr.get("FILTER")
-    instrument = hdr.get("INSTRUME", instrum)
+    if instrum is not None:
+        print("Overriding instrument with input {}".format(instrum))
+        instrument = instrum
+    else:
+        instrument = hdr.get("INSTRUME", instrum)
     mod = hdr.get("HIERARCH ESO DET ID")
 
     if (mod == "IFS") & (instrument == "SPHERE"):
