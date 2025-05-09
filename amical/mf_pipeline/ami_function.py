@@ -20,6 +20,8 @@ from pathlib import Path
 
 import numpy as np
 from rich import print as rprint
+import scipy.optimize as opt
+
 
 from amical.dpfit import leastsqFit
 from amical.externals.munch import munchify as dict2class
@@ -1134,3 +1136,75 @@ def phase_chi2(p, fitmat, ph_mn, ph_err):
     arg = np.array(tmp - piston) * 1j
     phase_chi2 = np.sum(np.abs(1 - np.exp(arg)) ** 2 / e_tmp)
     return phase_chi2
+
+def mf_sampled_power(uv_tf, mf_params, ps_ref):
+    """
+    Parameters:
+    -----------
+        uf_tf: Array
+            Array of shape (2,) where the first argument is a scalar (float)
+            factor of sampling coordinates and the second is the angle by
+            which to rotate sample points (degrees).
+        mf_params: dict
+            dictionary with keys 'maskname', 'instrument', 'filtname',
+            'peakmethod', 'holediam'. Ref to AMICAL extract_bs() for more.
+        ps_ref: Array
+            2D array of the power spectra to be sampled by AMICAL
+
+    Returns:
+    -------
+        float:
+            Negative sum of the power spectra across sampled coordinates.
+    """
+    uv_scaling, theta_detector = uv_tf
+
+    npix = ps_ref.shape[0]
+    mf = make_mf(
+        npix=npix,
+        theta_detector=theta_detector,
+        scaling=uv_scaling,
+        display=False,
+        **mf_params,
+    )
+
+    SAMP = np.zeros(shape=(npix, npix))
+    pts = np.concatenate([np.concatenate(mf.l_conj_c, axis=1), np.concatenate(mf.l_norm_c, axis=1)], axis=1)
+    weights = np.concatenate([np.concatenate(mf.v_conj_c, axis=0), np.concatenate(mf.v_norm_c, axis=0)], axis=0)
+
+    SAMP[pts[0,:], pts[1,:]] = weights 
+
+    return -np.nansum(SAMP*ps_ref)
+
+def get_uv_tf(
+    mf_params,
+    cube_cleaned,
+):
+    """
+    Optimises uv scaling and detector rotation for AMICAL match filter (mf).
+
+    Parameters:
+    -----------
+        mf_params: dict
+            dictionary with keys 'maskname', 'instrument', 'filtname',
+            'peakmethod', 'holediam'. Ref to AMICAL extract_bs() for more.
+        cube_cleaned: Array
+            AMICAL cleaned data cube (output from amical.select_clean_data)
+
+    Returns:
+    -------
+        uv_scaling: float
+            Scalar value to scale mf sampling coordinates by.
+        theta_detector: float
+            Angle to rotate mf sampling coordinates by (degrees).
+    """
+
+    ps_ref = np.log(np.abs(np.fft.fftshift(np.fft.fft2(cube_cleaned[0])))**2 )
+
+    x_opt = opt.minimize(mf_sampled_power, 
+        x0=np.array([1,0]),
+        args=(mf_params, ps_ref), 
+        method='Nelder-Mead', 
+        options={'maxiter': 1000}
+    )
+
+    return x_opt.x[0], x_opt.x[1]
