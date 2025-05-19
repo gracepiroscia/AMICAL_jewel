@@ -262,7 +262,7 @@ def get_wavelength(ins, filtname):
             "CntK1": [2.091, 0.034],
             "CntK2": [2.266, 0.032],
         },
-        "SPHERE-IFS": {"YJ": wave_YJ, "YH": wave_YJH},
+        # "SPHERE-IFS": {"YJ": wave_YJ, "YH": wave_YJH},
         "GLINT": {"F155": [1.55, 0.01], "F430": [4.3, 0.01]},
         "VISIR": {"10_5_SAM": [10.56, 0.37], "11_3_SAM": [11.23, 0.55]},
         "VAMPIRES": {
