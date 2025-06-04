@@ -359,6 +359,7 @@ def _get_3d_bad_pixels(bad_map, add_bad, data):
 def show_clean_params(
     filename,
     isz=None,
+    isz_sr=None, 
     r1=None,
     dr=None,
     bad_map=None,
@@ -385,6 +386,7 @@ def show_clean_params(
 
     `filename` {str}: filename containing the datacube,\n
     `isz` {int}: Size of the cropped image (default: None)\n
+    `isz_sr` {int} -- Size (pixels) of the search region to look for psf center (default: {None})\n
     `r1` {int}: Radius of the rings to compute background sky (default: 100)\n
     `dr` {int}: Outer radius to compute sky (default: 10)\n
     `bad_map` {array}: Bad pixel map with 0 and 1 where 1 set for a bad pixel (default: None),\n
@@ -430,7 +432,13 @@ def show_clean_params(
 
     if psf_loc is not None:
         assert isz is not None, "isz must be set if psf_loc is set"
-        hlf_sz = int((isz*1.5)/ 2)
+        if isz_sr is None:
+            hlf_sz = int((isz*1.4)/ 2)
+            print("Setting search region size to 1.4x of crop size.")
+        else:
+            assert isz_sr >= isz, "Search region needs to be larger than crop size."
+            hlf_sz = int(isz_sr/2)
+
         img1= img1[psf_loc[0]-hlf_sz:psf_loc[0]+hlf_sz, psf_loc[1]-hlf_sz:psf_loc[1]+hlf_sz]
         dims = img1.shape
 
@@ -570,6 +578,7 @@ def _remove_dark(img1, darkfile=None, ihdu=0, verbose=False):
 def clean_data(
     data,
     isz=None,
+    isz_sr = None,
     r1=None,
     dr=None,
     edge=0,
@@ -595,6 +604,7 @@ def clean_data(
 
     `data` {np.array} -- datacube containing the NRM data\n
     `isz` {int} -- Size of the cropped image (default: {None})\n
+    `isz_sr` {int} -- Size (pixels) of the search region to look for psf center (default: {None})\n
     `r1` {int} -- Radius of the rings to compute background sky (default: {None})\n
     `dr` {int} -- Outer radius to compute sky (default: {None})\n
     `edge` {int} -- Patch the edges of the image (VLT/SPHERE artifact, default: {200}),\n
@@ -633,10 +643,16 @@ def clean_data(
 
 
         if psf_loc is not None:
-            assert isz is not None, "isz must be set if psf_loc is set"            
-            hlf_sz = int((isz*1.4)/ 2)
+            assert isz is not None, "isz must be set if psf_loc is set"  
+            if isz_sr is None:
+                hlf_sz = int((isz*1.4)/ 2)
+                print("Setting search region size to 1.4x of crop size.")
+            else:
+                assert isz_sr >= isz, "Search region needs to be larger than crop size."
+                hlf_sz = int(isz_sr/2)
+
             img1= img1[psf_loc[0]-hlf_sz:psf_loc[0]+hlf_sz, psf_loc[1]-hlf_sz:psf_loc[1]+hlf_sz]
-            assert img1.shape == (2*hlf_sz,2*hlf_sz), "Cropping out of bounds. Change isz or check psf_loc."
+            assert img1.shape == (2*hlf_sz,2*hlf_sz), "Cropping out of bounds. Change isz, isz_sr or check psf_loc."
 
         if isz is not None:
             # Get expected center for sky correction
@@ -697,6 +713,7 @@ def clean_data(
 def select_clean_data(
     filename,
     isz=None,
+    isz_sr = None,
     r1=None,
     dr=None,
     edge=0,
@@ -730,6 +747,7 @@ def select_clean_data(
 
     `filename` {str}: filename containing the datacube,\n
     `isz` {int}: Size of the cropped image (default: {None})\n
+    `isz_sr` {int} -- Size (pixels) of the search region to look for psf center (default: {None})\n
     `r1` {int}: Radius of the rings to compute background sky (default: {100})\n
     `dr` {int}: Outer radius to compute sky (default: {10})\n
     `edge` {int}: Patch the edges of the image (VLT/SPHERE artifact, default: {0}),\n
@@ -820,6 +838,7 @@ def select_clean_data(
         show_clean_params(
             filename,
             isz,
+            isz_sr,
             r1,
             dr,
             bad_map=bad_map,
@@ -844,6 +863,7 @@ def select_clean_data(
     cube_cleaned = clean_data(
         cube,
         isz=isz,
+        isz_sr=isz_sr,
         r1=r1,
         edge=edge,
         bad_map=bad_map,
