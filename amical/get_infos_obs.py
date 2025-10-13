@@ -179,7 +179,7 @@ def get_mask(ins, mask, first=0):
                     [2.19284  ,   -1.33738],
                     [-1.77857 ,    -2.75704],
                 ]
-            )*-1, # FLIPPED ABOUT ORIGIN (post beam-switcher installment)
+            )*np.array([-1,1]), # FLIPPED ABOUT ORIGIN (post beam-switcher installment)
             "g9": np.array(
                 [# Mask coords at M1 (m), hole diam at M1 = 0.64m
                     [2.45492 ,    -2.29575],
@@ -205,7 +205,7 @@ def get_mask(ins, mask, first=0):
                     [ -3.16595,     -1.26546],
                     [-2.99218,      1.35077],
                 ]
-            )*-1, 
+            )*np.array([-1,1]), 
             "g7":np.array( # Mask coords at M1 (m), hole diam at M1 = 1.1m
                     [
                         [2.52145  ,-1.52360],
@@ -227,7 +227,7 @@ def get_mask(ins, mask, first=0):
                         [-1.12974 ,  2.96885],
                         [-2.80338 , 0.747867],
                     ]
-            )*-1,
+            )*np.array([-1,1]),
             # at M1 (m)
             # hole diam at M1: 1.307m 
             'jewel_4x5_0': np.array(
