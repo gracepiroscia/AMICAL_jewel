@@ -217,7 +217,7 @@ def get_mask(ins, mask, first=0):
                         [-2.80338 , 0.747867],
                     ]
             ),
-            "g7_f":np.array( # Mask coords at M1 (m), hole diam at M1 = 1.1m FLIPPED ABOUT ORIGIN (post beam-switcher installment)
+            "g7_f":np.array( # Mask coords at M1 (m), hole diam at M1 = 1.1m FLIPPED ABOUT Y-axis (post beam-switcher installment)
                     [
                         [2.52145  ,-1.52360],
                         [2.91280  , 1.66366],
@@ -262,7 +262,6 @@ def get_mask(ins, mask, first=0):
                         [-3.18144784, -0.40054519],
                     ]
             ),
-
             # at M1 (m)
             # hole diam at M1: 0.89
             'jewel_7x6_0': np.array(
@@ -397,6 +396,8 @@ def get_wavelength(ins, filtname):
             "F670": [0.67, 0.043], 
             "F720": [0.719, 0.046],
             "F760":[0.760, 0.032],
+            "Ha": [0.6563, 0.0008], # Lucas et. al. 2024
+            "CntHa": [0.6477, 0.0019],
         },
     }
 
