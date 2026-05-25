@@ -157,7 +157,8 @@ def cal2dict(
     snr=4,
     true_flag_v2=True,
     true_flag_t3=False,
-    oriented=-1,
+    oriented_h=-1,
+    oriented_v=1,
     ind_hole=None,
 ):
     """Format class containing calibrated data into appropriate dictionnary
@@ -182,9 +183,12 @@ def cal2dict(
     `true_flag_t3` : {bool}, (optional)
         If True, real flag are computed for cp using snr threshold
         (default 4), by default True,\n
-    `oriented` {float}:
-        If oriented == -1, east assumed to the left in the image, otherwise
-        oriented == 1 (east to the right); (Default -1),\n
+    `oriented_h` {float}:
+        If oriented_h == -1, east assumed to the left in the image, otherwise
+        oriented_h == 1 (east to the right); (Default -1),\n
+    `oriented_v` {float}:
+        If oriented_v == 1, north assumed to the top in the image, otherwise
+        oriented_v == -1 (north to the bottom); (Default 1),\n
 
     Returns
     -------
@@ -234,7 +238,7 @@ def cal2dict(
         target = res_t.infos.target
 
     thepa = pa - 0.5 * del_pa
-    u, v = oriented * res_t.u, res_t.v
+    u, v = oriented_h * res_t.u, oriented_v * res_t.v
     u1 = u * np.cos(np.deg2rad(thepa)) + v * np.sin(np.deg2rad(thepa))
     v1 = -u * np.sin(np.deg2rad(thepa)) + v * np.cos(np.deg2rad(thepa))
 
@@ -472,7 +476,8 @@ def save(
     *,
     origin=None,
     raw=False,
-    oriented=-1,
+    oriented_h=-1,
+    oriented_v=1,
 ):
     """
     Summary:
@@ -512,9 +517,12 @@ def save(
     `raw` {bool}:
         Set to True if the input is not calibrated. This will only silence the warning
         shown otherwise when an uncalibrated input is detected (default=False).\n 
-    `oriented` {float}:
-        If oriented == -1, east assumed to the left in the image, otherwise
-        oriented == 1 (east to the right); (Default -1),\n
+    `oriented_h` {float}:
+        If oriented_h == -1, east assumed to the left in the image, otherwise
+        oriented_h == 1 (east to the right); (Default -1),\n
+    `oriented_v` {float}:
+        If oriented_v == 1, north assumed to the top in the image, otherwise
+        oriented_v == -1 (north to the bottom); (Default 1),\n
 
     Returns:
     --------
@@ -562,7 +570,8 @@ def save(
             true_flag_t3=true_flag_t3,
             ind_hole=ind_hole,
             snr=snr,
-            oriented=oriented,
+            oriented_h=oriented_h,
+            oriented_v=oriented_v,
         )
         l_dic.append(idic)
     dic = l_dic[0]
@@ -1171,7 +1180,8 @@ def show(
     snr=4,
     true_flag_v2=True,
     true_flag_t3=False,
-    oriented=-1,
+    oriented_h=-1,
+    oriented_v=1,
 ):
     """Show oifits data of a multiple dataset (loaded with oifits.load or oifits filename).
 
@@ -1201,9 +1211,12 @@ def show(
         using snr parameter (default: True),\n
     `snr` {float}:
         If inputs are classes from amical.calibrate, use snr param to compute flag,
-    `oriented` {float}:
-        If oriented == -1, east assumed to the left in the image, otherwise
-        oriented == 1 (east to the right); (Default -1),\n
+    `oriented_h` {float}:
+        If oriented_h == -1, east assumed to the left in the image, otherwise
+        oriented_h == 1 (east to the right); (Default -1),\n
+    `oriented_v` {float}:
+        If oriented_v == 1, north assumed to the top in the image, otherwise
+        oriented_v == -1 (north to the bottom); (Default 1),\n
     """
     import matplotlib.pyplot as plt
 
@@ -1219,7 +1232,8 @@ def show(
                 ind_hole=ind_hole,
                 true_flag_t3=true_flag_t3,
                 snr=snr,
-                oriented=oriented,
+                oriented_h=oriented_h,
+                oriented_v=oriented_v,
             )
             for x in inputList
         ]
