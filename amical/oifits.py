@@ -472,6 +472,7 @@ def save(
     *,
     origin=None,
     raw=False,
+    oriented=-1,
 ):
     """
     Summary:
@@ -510,7 +511,10 @@ def save(
         `None` (default=None),\n
     `raw` {bool}:
         Set to True if the input is not calibrated. This will only silence the warning
-        shown otherwise when an uncalibrated input is detected (default=False).\n
+        shown otherwise when an uncalibrated input is detected (default=False).\n 
+    `oriented` {float}:
+        If oriented == -1, east assumed to the left in the image, otherwise
+        oriented == 1 (east to the right); (Default -1),\n
 
     Returns:
     --------
@@ -558,6 +562,7 @@ def save(
             true_flag_t3=true_flag_t3,
             ind_hole=ind_hole,
             snr=snr,
+            oriented=oriented,
         )
         l_dic.append(idic)
     dic = l_dic[0]
@@ -1166,6 +1171,7 @@ def show(
     snr=4,
     true_flag_v2=True,
     true_flag_t3=False,
+    oriented=-1,
 ):
     """Show oifits data of a multiple dataset (loaded with oifits.load or oifits filename).
 
@@ -1195,6 +1201,9 @@ def show(
         using snr parameter (default: True),\n
     `snr` {float}:
         If inputs are classes from amical.calibrate, use snr param to compute flag,
+    `oriented` {float}:
+        If oriented == -1, east assumed to the left in the image, otherwise
+        oriented == 1 (east to the right); (Default -1),\n
     """
     import matplotlib.pyplot as plt
 
@@ -1210,6 +1219,7 @@ def show(
                 ind_hole=ind_hole,
                 true_flag_t3=true_flag_t3,
                 snr=snr,
+                oriented=oriented,
             )
             for x in inputList
         ]
