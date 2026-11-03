@@ -1119,6 +1119,7 @@ def extract_bs(
     verbose=False,
     display=True,
     save_ft_png_to=None,
+    equal_gain=False,
 ):
     """Compute the bispectrum (bs, v2, cp, etc.) from a data cube.
 
@@ -1177,7 +1178,9 @@ def extract_bs(
     `save_ft_png_to` {str}: Default None
         Name of the directory to save a png figure of the _show_ft_arr_peak output\n
         to.
-
+    `equal_gain`: bool (default = False)
+        If True, all pixels above the cutoff are given the same gain (instead of being weighted by the \n
+        value of the matched filter). \n
     Returns:
     --------
     `obs_result` {class object}:
@@ -1255,6 +1258,7 @@ def extract_bs(
         display=display,
         save_to=save_to,
         filename=filename,
+        equal_gain=equal_gain,
     )
 
     ifig = 2

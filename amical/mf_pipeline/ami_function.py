@@ -331,6 +331,7 @@ def make_mf(
     save_to=None,
     filename=None,
     fliplr=False,
+    equal_gain=False,
 ):
     """
     Summary:
@@ -368,6 +369,9 @@ def make_mf(
     `fw_splodge` {float}:
         Relative size of the splodge used to compute multiple triangle indices and the fwhm
         of the 'gauss' technique,\n
+    `equal_gain`: bool (default = False)
+        If True, all pixels above the cutoff are given the same gain (instead of being weighted by the \n
+        value of the matched filter). \n
     """
 
     # Get detector, filter and mask informations
@@ -497,14 +501,18 @@ def make_mf(
 
         # Now normalise the pixel gain, so that using the matched filter
         # on an ideal splodge is equivalent to just looking at the peak...
-        if peakmethod == "gauss":
-            pixelgain, pixelgain_c = _normalize_gain(
-                ind_peak["gain_f"], ind_peak["gain_c"], pixelvector, pixelvector_c
-            )
+        if not equal_gain:
+            if peakmethod == "gauss":
+                pixelgain, pixelgain_c = _normalize_gain(
+                    ind_peak["gain_f"], ind_peak["gain_c"], pixelvector, pixelvector_c
+                )
+            else:
+                pixelgain, pixelgain_c = _normalize_gain(
+                    ind_peak["flat"], ind_peak["centered"], pixelvector, pixelvector_c
+                )
         else:
-            pixelgain, pixelgain_c = _normalize_gain(
-                ind_peak["flat"], ind_peak["centered"], pixelvector, pixelvector_c
-            )
+            pixelgain = np.ones_like(pixelvector, dtype=float)
+            pixelgain_c = np.ones_like(pixelvector_c, dtype=float)
 
         mf_ix[0, i] = Sum
         Sum = Sum + len(pixelvector)

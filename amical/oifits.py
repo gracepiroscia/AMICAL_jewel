@@ -654,9 +654,6 @@ def save(
 
     name_star = dic["info"]["TARGET"]
 
-    customSimbad = Simbad()
-    customSimbad.add_votable_fields("propermotions", "sptype", "parallax")
-
     # Add information from Simbad:
     if fake_obj:
         ra = pmra = dec = pmdec = plx = [0]
@@ -667,6 +664,9 @@ def save(
             from astropy.coordinates import SkyCoord
 
             try:
+                customSimbad = Simbad()
+                customSimbad.add_votable_fields("propermotions", "sptype", "parallax")
+
                 query = customSimbad.query_object(name_star)
                 coord = SkyCoord(
                     query["RA"][0] + " " + query["DEC"][0], unit=(u.hourangle, u.deg)
