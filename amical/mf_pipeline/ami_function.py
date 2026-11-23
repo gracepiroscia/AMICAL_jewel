@@ -1219,6 +1219,9 @@ def get_uv_tf(
             Scalar value to scale mf sampling coordinates by.
         theta_detector: float
             Angle to rotate mf sampling coordinates by (degrees).
+        grid: dict
+            "power": (n_scale, n_theta) weighted sum of log power at the sampled pixels
+                     (higher = better aligned), "scales": (n_scale,), "thetas": (n_theta,)
     """
     # mean power spectrum over all frames, normalised; small floor so log stays finite
     ps = np.mean(np.abs(np.fft.fftshift(np.fft.fft2(cube_cleaned), axes=(-2, -1))) ** 2, axis=0)
@@ -1227,14 +1230,17 @@ def get_uv_tf(
     # 1. coarse grid: global search
     scales = np.linspace(*scale_range, n_grid[0])
     thetas = np.linspace(*theta_range, n_grid[1])
-    best, best_val = np.asarray(x0, float), mf_sampled_power(x0, mf_params, ps_ref)
-    for s in scales:
-        for t in thetas:
-            val = mf_sampled_power((s, t), mf_params, ps_ref)
-            if val < best_val:
-                best, best_val = np.array([s, t]), val
+    power = np.empty((len(scales), len(thetas)))
+    for i, s in enumerate(scales):
+        for j, t in enumerate(thetas):
+            power[i, j] = -mf_sampled_power((s, t), mf_params, ps_ref)
 
-    # 2. local refinement, first steps one grid cell (not the tiny default step)
+    best, best_val = np.asarray(x0, float), mf_sampled_power(x0, mf_params, ps_ref)
+    i, j = np.unravel_index(np.argmax(power), power.shape)
+    if -power[i, j] < best_val:
+        best, best_val = np.array([scales[i], thetas[j]]), -power[i, j]
+
+    # 2. optim
     ds, dt = scales[1] - scales[0], thetas[1] - thetas[0]
     x_opt = opt.minimize(mf_sampled_power,
         x0=best,
@@ -1245,4 +1251,4 @@ def get_uv_tf(
     if x_opt.fun < best_val:
         best = x_opt.x
 
-    return best[0], best[1]
+    return best[0], best[1], dict(power=power, scales=scales, thetas=thetas)
