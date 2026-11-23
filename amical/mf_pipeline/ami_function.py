@@ -1186,6 +1186,7 @@ def mf_sampled_power(uv_tf, mf_params, ps_ref):
 def get_uv_tf(
     mf_params,
     cube_cleaned,
+    x0=np.array([1,0]),
 ):
     """
     Optimises uv scaling and detector rotation for AMICAL match filter (mf).
@@ -1209,7 +1210,7 @@ def get_uv_tf(
     ps_ref = np.log(np.abs(np.fft.fftshift(np.fft.fft2(cube_cleaned[0])))**2 )
 
     x_opt = opt.minimize(mf_sampled_power, 
-        x0=np.array([1,0]),
+        x0=x0,
         args=(mf_params, ps_ref), 
         method='Nelder-Mead', 
         options={'maxiter': 1000}
