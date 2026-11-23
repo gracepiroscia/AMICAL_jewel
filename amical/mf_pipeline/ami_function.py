@@ -1186,10 +1186,17 @@ def mf_sampled_power(uv_tf, mf_params, ps_ref):
 def get_uv_tf(
     mf_params,
     cube_cleaned,
-    x0=np.array([1,0]),
+    x0=np.array([1, 0]),
+    scale_range=(0.8, 1.2),
+    theta_range=(-10, 10),
+    n_grid=(15, 15),
 ):
     """
     Optimises uv scaling and detector rotation for AMICAL match filter (mf).
+
+    A coarse grid search over scale_range x theta_range finds the best region
+    (the objective has many local maxima and is flat between pixel steps), then
+    Nelder-Mead refines it starting with steps of one grid cell.
 
     Parameters:
     -----------
@@ -1198,6 +1205,13 @@ def get_uv_tf(
             'peakmethod', 'holediam'. Ref to AMICAL extract_bs() for more.
         cube_cleaned: Array
             AMICAL cleaned data cube (output from amical.select_clean_data)
+        x0: Array
+            Initial guess [scaling, theta]; used as the starting point if the grid
+            finds nothing better.
+        scale_range, theta_range: tuple
+            Grid search ranges for the scaling and rotation (degrees).
+        n_grid: tuple
+            Number of grid points in (scaling, theta).
 
     Returns:
     -------
@@ -1206,14 +1220,29 @@ def get_uv_tf(
         theta_detector: float
             Angle to rotate mf sampling coordinates by (degrees).
     """
+    # mean power spectrum over all frames, normalised; small floor so log stays finite
+    ps = np.mean(np.abs(np.fft.fftshift(np.fft.fft2(cube_cleaned), axes=(-2, -1))) ** 2, axis=0)
+    ps_ref = np.log(ps / ps.max() + 1e-8)
 
-    ps_ref = np.log(np.abs(np.fft.fftshift(np.fft.fft2(cube_cleaned[0])))**2 )
+    # 1. coarse grid: global search
+    scales = np.linspace(*scale_range, n_grid[0])
+    thetas = np.linspace(*theta_range, n_grid[1])
+    best, best_val = np.asarray(x0, float), mf_sampled_power(x0, mf_params, ps_ref)
+    for s in scales:
+        for t in thetas:
+            val = mf_sampled_power((s, t), mf_params, ps_ref)
+            if val < best_val:
+                best, best_val = np.array([s, t]), val
 
-    x_opt = opt.minimize(mf_sampled_power, 
-        x0=x0,
-        args=(mf_params, ps_ref), 
-        method='Nelder-Mead', 
-        options={'maxiter': 1000}
+    # 2. local refinement, first steps one grid cell (not the tiny default step)
+    ds, dt = scales[1] - scales[0], thetas[1] - thetas[0]
+    x_opt = opt.minimize(mf_sampled_power,
+        x0=best,
+        args=(mf_params, ps_ref),
+        method='Nelder-Mead',
+        options={'maxiter': 1000, 'initial_simplex': [best, best + [ds, 0], best + [0, dt]]},
     )
+    if x_opt.fun < best_val:
+        best = x_opt.x
 
-    return x_opt.x[0], x_opt.x[1]
+    return best[0], best[1]
