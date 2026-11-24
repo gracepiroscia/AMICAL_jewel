@@ -1186,66 +1186,51 @@ def mf_sampled_power(uv_tf, mf_params, ps_ref):
 def get_uv_tf(
     mf_params,
     cube_cleaned,
-    x0=np.array([1, 0]),
     scale_range=(0.8, 1.2),
     theta_range=(-10, 10),
     n_grid=(15, 15),
+    flatten=True,
 ):
     """
     Optimises uv scaling and detector rotation for AMICAL match filter (mf).
 
-    A coarse grid search over scale_range x theta_range finds the best region
-    (the objective has many local maxima and is flat between pixel steps), then
-    Nelder-Mead refines it starting with steps of one grid cell.
-
-    Parameters:
-    -----------
-        mf_params: dict
-            dictionary with keys 'maskname', 'instrument', 'filtname',
-            'peakmethod', 'holediam'. Ref to AMICAL extract_bs() for more.
-        cube_cleaned: Array
-            AMICAL cleaned data cube (output from amical.select_clean_data)
-        x0: Array
-            Initial guess [scaling, theta]; used as the starting point if the grid
-            finds nothing better.
-        scale_range, theta_range: tuple
-            Grid search ranges for the scaling and rotation (degrees).
-        n_grid: tuple
-            Number of grid points in (scaling, theta).
+    Grid search over scale_range x theta_range, then bounded Nelder-Mead refinement.
+    With flatten=True the radial fall-off of the power spectrum is removed first, so
+    the score rewards samples on splodges rather than samples near the centre.
 
     Returns:
     -------
-        uv_scaling: float
-            Scalar value to scale mf sampling coordinates by.
-        theta_detector: float
-            Angle to rotate mf sampling coordinates by (degrees).
-        grid: dict
-            "power": (n_scale, n_theta) weighted sum of log power at the sampled pixels
-                     (higher = better aligned), "scales": (n_scale,), "thetas": (n_theta,)
+        uv_scaling, theta_detector: float
+        grid: dict with "power" (n_scale, n_theta), "scales", "thetas"
     """
     # mean power spectrum over all frames, normalised; small floor so log stays finite
     ps = np.mean(np.abs(np.fft.fftshift(np.fft.fft2(cube_cleaned), axes=(-2, -1))) ** 2, axis=0)
     ps_ref = np.log(ps / ps.max() + 1e-8)
+    if flatten:
+        # subtract the azimuthal median of log power at each radius
+        n = ps_ref.shape[0]
+        yy, xx = np.indices(ps_ref.shape)
+        r = np.hypot(xx - n // 2, yy - n // 2).astype(int)
+        med = np.array([np.median(ps_ref[r == k]) for k in range(r.max() + 1)])
+        ps_ref = ps_ref - med[r]
 
-    # 1. coarse grid: global search
+    # 1. grid
     scales = np.linspace(*scale_range, n_grid[0])
     thetas = np.linspace(*theta_range, n_grid[1])
     power = np.empty((len(scales), len(thetas)))
     for i, s in enumerate(scales):
         for j, t in enumerate(thetas):
             power[i, j] = -mf_sampled_power((s, t), mf_params, ps_ref)
-
-    best, best_val = np.asarray(x0, float), mf_sampled_power(x0, mf_params, ps_ref)
     i, j = np.unravel_index(np.argmax(power), power.shape)
-    if -power[i, j] < best_val:
-        best, best_val = np.array([scales[i], thetas[j]]), -power[i, j]
+    best, best_val = np.array([scales[i], thetas[j]]), -power[i, j]
 
-    # 2. optim
+    # 2. bounded refinement, first steps one grid cell
     ds, dt = scales[1] - scales[0], thetas[1] - thetas[0]
     x_opt = opt.minimize(mf_sampled_power,
         x0=best,
         args=(mf_params, ps_ref),
         method='Nelder-Mead',
+        bounds=[scale_range, theta_range],
         options={'maxiter': 1000, 'initial_simplex': [best, best + [ds, 0], best + [0, dt]]},
     )
     if x_opt.fun < best_val:
